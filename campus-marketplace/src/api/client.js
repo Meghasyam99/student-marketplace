@@ -1,4 +1,5 @@
-const DEFAULT_BASE_URL = "http://127.0.0.1:8000";
+const DEFAULT_BASE_URL =
+  import.meta.env.VITE_API_URL || "https://student-marketplace-backend-3qqs.onrender.com";
 
 export const TOKEN_STORAGE_KEYS = {
   access: "cm_access_token",
