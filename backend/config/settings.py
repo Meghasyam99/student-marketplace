@@ -181,3 +181,8 @@ SIMPLE_JWT = {
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+CORS_ALLOWED_ORIGINS = [
+    "https://student-marketplace-meghasyam.netlify.app",
+]
+
+CORS_ALLOW_CREDENTIALS = True
