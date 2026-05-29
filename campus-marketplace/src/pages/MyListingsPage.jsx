@@ -2,27 +2,17 @@ import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import EmptyState from "../components/EmptyState";
+import ProductCard from "../components/ProductCard";
 import { useMarketplace } from "../context/MarketplaceContext";
 
-function formatINR(value) {
-  try {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(value);
-  } catch {
-    return `₹${value}`;
-  }
-}
-
 export default function MyListingsPage() {
-  const { currentUser, products, deleteProduct, updateProduct, getCategoryById } = useMarketplace();
+  const { currentUser, products } = useMarketplace();
 
   const myListings = useMemo(
     () => (currentUser ? products.filter((p) => p.sellerId === currentUser.id) : []),
     [products, currentUser]
   );
+  console.log("DEBUG:", myListings);
 
   if (!currentUser) {
     return (
@@ -63,61 +53,11 @@ export default function MyListingsPage() {
       </div>
 
       <div className="row g-3">
-        {myListings.map((p) => {
-          const category = getCategoryById(p.categoryId);
-          return (
-            <div key={p.id} className="col-12 col-md-6 col-lg-4">
-              <div className="cm-card h-100 overflow-hidden">
-                <img src={p.imageUrl} alt={p.title} className="cm-product-img cm-image" />
-                <div className="p-3">
-                  <div className="d-flex justify-content-between align-items-start gap-2">
-                    <div className="fw-semibold">{p.title}</div>
-                    <div className="fw-bold">{formatINR(p.price)}</div>
-                  </div>
-                  <div className="small cm-muted mt-1">{category?.name ?? p.categoryId}</div>
-
-                  <div className="d-flex gap-2 mt-3">
-                    <Link className="btn btn-outline-primary flex-grow-1" to={`/products/${p.id}`}>
-                      View details
-                    </Link>
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary"
-                      onClick={async () => {
-                        try {
-                          await updateProduct(p.id, { title: `${p.title} (Edited)` });
-                          toast.success("Listing updated");
-                        } catch (err) {
-                          toast.error(err?.data?.detail || err?.message || "Update failed");
-                        }
-                      }}
-                    >
-                      <i className="bi bi-pencil" aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-outline-danger"
-                      onClick={async () => {
-                        try {
-                          await deleteProduct(p.id);
-                          toast.info("Listing deleted");
-                        } catch (err) {
-                          toast.error(err?.data?.detail || err?.message || "Delete failed");
-                        }
-                      }}
-                    >
-                      <i className="bi bi-trash" aria-hidden="true" />
-                    </button>
-                  </div>
-
-                  <div className="small cm-muted mt-3">
-                    Condition: <span className="fw-semibold">{p.condition}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {myListings.map((p, idx) => (
+          <div key={p.id || idx} className="col-12 col-md-6 col-lg-4">
+            <ProductCard product={p} />
+          </div>
+        ))}
       </div>
     </div>
   );

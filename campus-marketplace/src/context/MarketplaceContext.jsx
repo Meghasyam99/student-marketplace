@@ -38,7 +38,12 @@ function mapApiUser(apiUser) {
 function mapApiProfile(apiProfile) {
   if (!apiProfile) return null;
   return {
-    id: String(apiProfile.user_id ?? apiProfile.username ?? apiProfile.email),
+    id: String(
+      apiProfile.id ??
+      apiProfile.user_id ??
+      apiProfile.username ??
+      apiProfile.email
+    ),
     fullName: apiProfile.full_name ?? "",
     collegeName: apiProfile.college_name ?? "",
     email: apiProfile.email ?? "",
@@ -66,7 +71,13 @@ function mapApiProduct(apiProduct, categoriesByBackendId) {
     condition: apiProduct.condition,
     categoryId: categorySlug || "books",
     imageUrl,
-    sellerId: String(apiProduct.seller?.id ?? ""),
+    sellerId: String(
+      apiProduct.seller?.id ??
+      apiProduct.seller?.user_id ??
+      apiProduct.seller?.username ??
+      apiProduct.seller?.email ??
+      ""
+    ),
     postedAt: apiProduct.created_at,
     flags: apiProduct.flags ?? { featured: false, trending: false },
     __api: apiProduct,
@@ -78,6 +89,9 @@ export function MarketplaceProvider({ children }) {
 
   const [categories, setCategories] = useState(() => CATEGORY_ICON_SOURCE);
   const [products, setProducts] = useState([]);
+  useEffect(() => {
+  console.log("PRODUCT STATE CHANGED:", products);
+  }, [products]);
   const [usersById, setUsersById] = useState(() => new Map());
   const [wishlistIds, setWishlistIds] = useState(() => new Set());
   const [currentUser, setCurrentUser] = useState(null);
@@ -119,52 +133,68 @@ export function MarketplaceProvider({ children }) {
   }, [categories]);
 
   useEffect(() => {
-    let cancelled = false;
+  let cancelled = false;
 
-    const loadPublic = async () => {
+  const loadPublic = async () => {
+    try {
       const apiCats = await request("/api/categories/");
       if (cancelled) return;
 
       const mappedCats = Array.isArray(apiCats)
         ? apiCats.map((c) => mapApiCategory(c, iconMapRef.current))
         : CATEGORY_ICON_SOURCE;
+
       setCategories(mappedCats);
 
       const apiProducts = await request("/api/products/");
+      console.log("API Products:", apiProducts);
+
       if (cancelled) return;
 
       const catMap = new Map();
       for (const c of mappedCats) {
-        if (c.backendId != null) catMap.set(c.backendId, c);
+        if (c.backendId != null) {
+          catMap.set(c.backendId, c);
+        }
       }
 
       const mappedProducts = Array.isArray(apiProducts)
         ? apiProducts.map((p) => mapApiProduct(p, catMap))
         : [];
-      setProducts(mappedProducts);
 
+      console.log("Mapped Products:", mappedProducts);
+
+      setProducts(mappedProducts);
+      setTimeout(() => {
+      console.log("AFTER 2 SECONDS PRODUCTS:", mappedProducts);
+    }, 2000);
       setUsersById(() => {
         const next = new Map();
+
         for (const p of mappedProducts) {
           const seller = mapApiUser(p.__api?.seller);
-          if (seller?.id) next.set(seller.id, seller);
+          if (seller?.id) {
+            next.set(String(seller.id), seller);
+          }
         }
+
         return next;
       });
-    };
+    } catch (err) {
+      console.error("LOAD PUBLIC ERROR:", err);
 
-    loadPublic().catch(() => {
-      // If API isn't running yet, keep UI usable with built-in categories.
       if (!cancelled) {
         setCategories(CATEGORY_ICON_SOURCE);
       }
-    });
+    }
+  };
 
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  loadPublic();
+
+  return () => {
+    cancelled = true;
+  };
+}, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -339,7 +369,9 @@ export function MarketplaceProvider({ children }) {
         ? apiProducts.map((p) => mapApiProduct(p, catMap))
         : [];
       setProducts(mappedProducts);
-
+      setTimeout(() => {
+        console.log("AFTER 2 SECONDS PRODUCTS:", mappedProducts);
+      }, 2000);
       setUsersById((prev) => {
         const next = new Map(prev);
         for (const p of mappedProducts) {
@@ -378,6 +410,7 @@ export function MarketplaceProvider({ children }) {
       products,
       users,
       currentUser,
+      debugMessage: "HELLO_FROM_CONTEXT",
       isAuthenticated,
       login,
       registerUser,
