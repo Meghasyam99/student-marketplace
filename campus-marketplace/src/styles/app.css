@@ -1,0 +1,38 @@
+.cm-hero {
+  background: radial-gradient(
+      circle at 10% 10%,
+      rgba(37, 99, 235, 0.16),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 90% 20%,
+      rgba(124, 58, 237, 0.16),
+      transparent 55%
+    );
+}
+
+.cm-btn-gradient {
+  background-image: var(--cm-accent);
+  border: none;
+}
+
+.cm-btn-gradient:hover {
+  opacity: 0.96;
+}
+
+.cm-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cm-product-img {
+  aspect-ratio: 16 / 10;
+  border-top-left-radius: var(--cm-radius);
+  border-top-right-radius: var(--cm-radius);
+}
+
+.cm-section-title {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}

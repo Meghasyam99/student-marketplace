@@ -1,0 +1,121 @@
+:root {
+  --cm-bg: #ffffff;
+  --cm-surface: rgba(255, 255, 255, 0.78);
+  --cm-border: rgba(15, 23, 42, 0.10);
+
+  --cm-text: #0f172a;
+  --cm-muted: rgba(15, 23, 42, 0.66);
+
+  --cm-blue: #2563eb;
+  --cm-purple: #7c3aed;
+  --cm-accent: linear-gradient(135deg, var(--cm-blue), var(--cm-purple));
+
+  --cm-radius: 18px;
+  --cm-shadow: 0 16px 50px rgba(2, 6, 23, 0.10);
+}
+
+:root[data-bs-theme="dark"] {
+  --cm-bg: #0b1220;
+  --cm-surface: rgba(15, 23, 42, 0.55);
+  --cm-border: rgba(148, 163, 184, 0.16);
+
+  --cm-text: #e2e8f0;
+  --cm-muted: rgba(226, 232, 240, 0.68);
+
+  --cm-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+}
+
+body {
+  background: var(--cm-bg);
+  color: var(--cm-text);
+}
+
+.cm-gradient-text {
+  background: var(--cm-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.cm-glass {
+  background: var(--cm-surface);
+  border: 1px solid var(--cm-border);
+  border-radius: var(--cm-radius);
+  box-shadow: var(--cm-shadow);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+.cm-card {
+  border-radius: var(--cm-radius);
+  border: 1px solid var(--cm-border);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.cm-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--cm-shadow);
+}
+
+.cm-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.cm-link:hover {
+  color: inherit;
+}
+
+.cm-muted {
+  color: var(--cm-muted);
+}
+
+.cm-pill {
+  border-radius: 999px;
+}
+
+.cm-sticky {
+  position: sticky;
+  top: 0.75rem;
+  z-index: 1020;
+}
+
+.cm-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(148, 163, 184, 0.18);
+  border-radius: 12px;
+}
+
+:root[data-bs-theme="dark"] .cm-skeleton {
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.cm-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.55),
+    transparent
+  );
+  animation: cm-shimmer 1.1s infinite;
+}
+
+:root[data-bs-theme="dark"] .cm-skeleton::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(226, 232, 240, 0.22),
+    transparent
+  );
+}
+
+@keyframes cm-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
