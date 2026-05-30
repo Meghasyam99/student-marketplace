@@ -266,6 +266,7 @@ export function MarketplaceProvider({ children }) {
     };
 
     const login = async ({ email, password }) => {
+      console.log("LOGIN DEBUG - sending to backend:", { username: email, password });
       const token = await request("/api/auth/token/", {
         method: "POST",
         json: { username: email, password },
