@@ -2,27 +2,42 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useMarketplace } from "../context/MarketplaceContext";
+import { extractErrorMessage } from "../api/client";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useMarketplace();
 
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   const onSubmit = async (e) => {
     e.preventDefault();
 
+    const trimmed = identifier.trim();
+    if (!trimmed) {
+      toast.error("Please enter your email or username");
+      return;
+    }
+    if (!password) {
+      toast.error("Please enter your password");
+      return;
+    }
+
+    setSubmitting(true);
     try {
-      const profile = await login({ email: email.trim().toLowerCase(), password });
+      const profile = await login({ identifier: trimmed, email: trimmed, password });
       const firstName = (profile?.fullName || "").split(" ")[0] || "";
       toast.success(firstName ? `Welcome back, ${firstName}!` : "Welcome back!");
       if (remember) toast.info("Session will be remembered on this device");
       navigate("/home");
     } catch (err) {
-      const msg = err?.data?.detail || err?.message || "Login failed";
+      const msg = extractErrorMessage(err?.data, err?.message || "Login failed");
       toast.error(msg);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -33,18 +48,19 @@ export default function LoginPage() {
           <div className="cm-glass p-4 p-md-5">
             <div className="mb-4">
               <div className="h3 fw-bold mb-1">Login</div>
-              <div className="cm-muted">Sign in to manage listings and wishlist.</div>
+              <div className="cm-muted">Sign in to manage listings, wishlist, and profile.</div>
             </div>
 
             <form onSubmit={onSubmit} className="d-flex flex-column gap-3">
               <div>
-                <label className="form-label">Email</label>
+                <label className="form-label">Email or Username</label>
                 <input
-                  type="email"
+                  type="text"
                   className="form-control form-control-lg"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@college.edu"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="you@college.edu or username"
+                  autoComplete="username"
                   required
                 />
               </div>
@@ -57,6 +73,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  autoComplete="current-password"
                   required
                 />
               </div>
@@ -80,8 +97,19 @@ export default function LoginPage() {
                 </a>
               </div>
 
-              <button type="submit" className="btn btn-primary cm-btn-gradient btn-lg">
-                Sign in
+              <button
+                type="submit"
+                className="btn btn-primary cm-btn-gradient btn-lg"
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <span>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
+                    Signing in...
+                  </span>
+                ) : (
+                  "Sign in"
+                )}
               </button>
 
               <div className="small cm-muted">
@@ -91,7 +119,7 @@ export default function LoginPage() {
 
             <hr className="my-4" style={{ borderColor: "var(--cm-border)" }} />
             <div className="small cm-muted">
-              Tip: Login uses your Django backend account.
+              Tip: You can log in using either your registered college email or your username.
             </div>
           </div>
         </div>

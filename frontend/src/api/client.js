@@ -7,7 +7,7 @@ export const TOKEN_STORAGE_KEYS = {
 };
 
 export function getApiBaseUrl() {
-  const env = import.meta?.env?.VITE_API_BASE_URL;
+  const env = import.meta?.env?.VITE_API_BASE_URL || import.meta?.env?.VITE_API_URL;
   return (env && String(env).trim()) || DEFAULT_BASE_URL;
 }
 
@@ -15,6 +15,28 @@ function joinUrl(base, path) {
   const a = base.replace(/\/+$/, "");
   const b = path.startsWith("/") ? path : `/${path}`;
   return `${a}${b}`;
+}
+
+export function extractErrorMessage(data, fallback = "Request failed") {
+  if (!data) return fallback;
+  if (typeof data === "string") return data;
+  if (data.detail && typeof data.detail === "string") return data.detail;
+  if (Array.isArray(data.non_field_errors) && data.non_field_errors.length > 0) {
+    return data.non_field_errors[0];
+  }
+  if (typeof data === "object") {
+    for (const [key, val] of Object.entries(data)) {
+      if (Array.isArray(val) && val.length > 0) {
+        const fieldName = key.replace(/_/g, " ");
+        const formattedField = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+        return `${formattedField}: ${val[0]}`;
+      }
+      if (typeof val === "string") {
+        return val;
+      }
+    }
+  }
+  return fallback;
 }
 
 async function parseResponse(res) {
@@ -90,7 +112,8 @@ export async function apiRequest(path, options = {}) {
   if (res.status !== 401 || !retryOn401 || !refreshToken) {
     const data = await parseResponse(res);
     if (!res.ok) {
-      const err = new Error(data?.detail || `Request failed (${res.status})`);
+      const msg = extractErrorMessage(data, `Request failed (${res.status})`);
+      const err = new Error(msg);
       err.status = res.status;
       err.data = data;
       throw err;
@@ -99,7 +122,8 @@ export async function apiRequest(path, options = {}) {
   }
 
   // 401: try refresh once, then retry original request.
-  refreshInFlight = refreshInFlight ||
+  refreshInFlight =
+    refreshInFlight ||
     apiRequest("/api/auth/token/refresh/", {
       method: "POST",
       baseUrl,

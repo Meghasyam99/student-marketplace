@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useMarketplace } from "../context/MarketplaceContext";
+import { extractErrorMessage } from "../api/client";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -13,16 +14,22 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const onSubmit = async (e) => {
     e.preventDefault();
 
-    if (!fullName.trim() || !collegeName.trim()) {
+    const trimmedFullName = fullName.trim();
+    const trimmedCollegeName = collegeName.trim();
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedPhone = phone.trim();
+
+    if (!trimmedFullName || !trimmedCollegeName) {
       toast.error("Please enter your full name and college name");
       return;
     }
-    if (!email.trim().includes("@")) {
-      toast.error("Please enter a valid email");
+    if (!trimmedEmail || !trimmedEmail.includes("@")) {
+      toast.error("Please enter a valid email address");
       return;
     }
     if (password.length < 6) {
@@ -34,25 +41,23 @@ export default function RegisterPage() {
       return;
     }
 
+    setSubmitting(true);
     try {
       await registerUser({
-        fullName,
-        collegeName,
-        email: email.trim().toLowerCase(),
-        phone,
+        fullName: trimmedFullName,
+        collegeName: trimmedCollegeName,
+        email: trimmedEmail,
+        phone: trimmedPhone,
         password,
         confirmPassword,
       });
-      toast.success("Account created");
+      toast.success("Account created successfully!");
       navigate("/home");
     } catch (err) {
-      const msg =
-        err?.data?.email?.[0] ||
-        err?.data?.confirm_password?.[0] ||
-        err?.data?.detail ||
-        err?.message ||
-        "Registration failed";
+      const msg = extractErrorMessage(err?.data, err?.message || "Registration failed");
       toast.error(msg);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -97,17 +102,20 @@ export default function RegisterPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@college.edu"
+                  autoComplete="email"
                   required
                 />
               </div>
 
               <div className="col-12 col-md-6">
-                <label className="form-label">Phone Number</label>
+                <label className="form-label">Phone Number (Optional)</label>
                 <input
+                  type="tel"
                   className="form-control form-control-lg"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+91 XXXXX XXXXX"
+                  autoComplete="tel"
                 />
               </div>
 
@@ -118,7 +126,8 @@ export default function RegisterPage() {
                   className="form-control form-control-lg"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create a password"
+                  placeholder="At least 6 characters"
+                  autoComplete="new-password"
                   required
                 />
               </div>
@@ -131,13 +140,25 @@ export default function RegisterPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Re-enter password"
+                  autoComplete="new-password"
                   required
                 />
               </div>
 
               <div className="col-12">
-                <button type="submit" className="btn btn-primary cm-btn-gradient btn-lg w-100">
-                  Create account
+                <button
+                  type="submit"
+                  className="btn btn-primary cm-btn-gradient btn-lg w-100"
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <span>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
+                      Creating account...
+                    </span>
+                  ) : (
+                    "Create account"
+                  )}
                 </button>
               </div>
 

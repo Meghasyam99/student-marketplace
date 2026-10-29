@@ -37,6 +37,7 @@ function mapApiUser(apiUser) {
 
 function mapApiProfile(apiProfile) {
   if (!apiProfile) return null;
+  const isAdmin = Boolean(apiProfile.is_staff || apiProfile.is_superuser);
   return {
     id: String(
       apiProfile.id ??
@@ -48,7 +49,8 @@ function mapApiProfile(apiProfile) {
     collegeName: apiProfile.college_name ?? "",
     email: apiProfile.email ?? "",
     phone: apiProfile.phone_number ?? "",
-    role: "student",
+    role: isAdmin ? "admin" : "student",
+    isAdmin,
   };
 }
 
@@ -265,10 +267,11 @@ export function MarketplaceProvider({ children }) {
       return result;
     };
 
-    const login = async ({ email, password }) => {
+    const login = async ({ email, username, identifier, password }) => {
+      const userIdentifier = (identifier || email || username || "").trim();
       const token = await request("/api/auth/token/", {
         method: "POST",
-        json: { username: email, password },
+        json: { username: userIdentifier, email: userIdentifier, password },
         retryOn401: false,
       });
 
@@ -290,19 +293,20 @@ export function MarketplaceProvider({ children }) {
     const logout = () => clearSession();
 
     const registerUser = async ({ fullName, collegeName, email, phone, password, confirmPassword }) => {
+      const cleanEmail = (email || "").trim().toLowerCase();
       await request("/api/auth/register/", {
         method: "POST",
         json: {
-          full_name: fullName,
-          college_name: collegeName,
-          email,
-          phone_number: phone || "",
+          full_name: (fullName || "").trim(),
+          college_name: (collegeName || "").trim(),
+          email: cleanEmail,
+          phone_number: (phone || "").trim(),
           password,
           confirm_password: confirmPassword,
         },
         retryOn401: false,
       });
-      return login({ email, password });
+      return login({ email: cleanEmail, password });
     };
 
     const updateProfile = async (patch) => {
